@@ -35,12 +35,15 @@ interface Language {
   flag: string
 }
 
+// 1. 🌐 UPDATED: Add Arabic to the languages array
 const languages: Language[] = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'pl', name: 'Polski', flag: '🇵🇱' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' }, // Added Arabic (using Saudi Arabia flag as a common representation)
 ]
 
+// 2. 📝 UPDATED: Add Arabic translations to the translations object
 const translations = {
   en: {
     welcome: 'Welcome to UniBot! 👋',
@@ -104,6 +107,28 @@ const translations = {
     ],
     selectLanguage: 'Elige tu idioma preferido:',
     languageSelected: 'Idioma cambiado a',
+  },
+  // 🇦🇪 NEW LANGUAGE: ARABIC
+  ar: {
+    welcome: 'مرحباً بك في يوني-بوت! 👋',
+    subtitle:
+      'أنا مساعدك الذكي الخاص بجامعة فروتسواف للعلوم والتكنولوجيا. اسألني عن أي شيء يخص الإجراءات الجامعية، أو الدورات الدراسية، أو الحياة في الحرم الجامعي!',
+    connecting: 'جاري الاتصال بيوني-بوت...',
+    typing: 'يوني-بوت يكتب...',
+    placeholder: 'اكتب رسالتك...',
+    backToHome: 'العودة للصفحة الرئيسية',
+    online: 'متصل',
+    offline: 'غير متصل',
+    retryConnection: 'إعادة محاولة الاتصال',
+    connectionError: 'فشل الاتصال بالشات بوت. يرجى المحاولة مرة أخرى.',
+    suggestions: [
+      'المساعدة في البطاقة الجامعية',
+      'معلومات عن المقررات',
+      'خدمات الحرم الجامعي',
+      'الدعم الأكاديمي',
+    ],
+    selectLanguage: 'اختر لغتك المفضلة:',
+    languageSelected: 'تم تغيير اللغة إلى',
   },
 }
 
@@ -311,14 +336,20 @@ export default function ChatbotPage() {
       messageContent = msg.text
     }
 
+    // Determine text alignment based on language for better UX
+    const isArabic = currentLanguage === 'ar';
+    const textAlignClass = isArabic ? 'text-right' : 'text-left';
+    const messageAlignmentClass = isArabic ? (msg.type === 'user' ? 'justify-start' : 'justify-end') : (msg.type === 'user' ? 'justify-end' : 'justify-start');
+
     return (
       <div
         key={msg.messageId || index}
-        className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+        className={`flex ${messageAlignmentClass} mb-4`}
+        style={{ direction: isArabic ? 'rtl' : 'ltr' }} // RTL support for the message container
       >
         {msg.type === 'bot' && (
           <Avatar
-            className="bg-gradient-to-br from-blue-500 to-purple-600 mr-3 flex-shrink-0"
+            className={`bg-gradient-to-br from-blue-500 to-purple-600 ${isArabic ? 'ml-3' : 'mr-3'} flex-shrink-0`}
             sx={{ width: 40, height: 40 }}
           >
             <SmartToyIcon style={{ fontSize: '20px', color: 'white' }} />
@@ -330,11 +361,14 @@ export default function ChatbotPage() {
             elevation={1}
             className={`p-4 ${
               msg.type === 'user'
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-br-sm'
-                : 'bg-white border border-gray-200 rounded-bl-sm'
+                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                : 'bg-white border border-gray-200'
+            } ${isArabic
+              ? (msg.type === 'user' ? 'rounded-tl-sm' : 'rounded-tr-sm')
+              : (msg.type === 'user' ? 'rounded-br-sm' : 'rounded-bl-sm')
             }`}
           >
-            <div className="text-sm break-words">
+            <div className={`text-sm break-words ${textAlignClass}`}>
               {msg.type === 'bot' ? (
                 <ReactMarkdown
                   components={{
@@ -351,10 +385,10 @@ export default function ChatbotPage() {
                       <p className="mb-2 last:mb-0">{children}</p>
                     ),
                     ul: ({ children }) => (
-                      <ul className="list-disc pl-4 mb-2">{children}</ul>
+                      <ul className={`list-disc mb-2 ${isArabic ? 'pr-4' : 'pl-4'}`}>{children}</ul>
                     ),
                     ol: ({ children }) => (
-                      <ol className="list-decimal pl-4 mb-2">{children}</ol>
+                      <ol className={`list-decimal mb-2 ${isArabic ? 'pr-4' : 'pl-4'}`}>{children}</ol>
                     ),
                     li: ({ children }) => <li className="mb-1">{children}</li>,
                     strong: ({ children }) => (
@@ -414,7 +448,7 @@ export default function ChatbotPage() {
               variant="caption"
               className={`mt-2 block ${
                 msg.type === 'user' ? 'text-white/70' : 'text-gray-500'
-              }`}
+              } ${isArabic ? 'text-left' : 'text-right'}`}
             >
               {new Date(msg.timestamp).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -458,7 +492,7 @@ export default function ChatbotPage() {
 
         {msg.type === 'user' && (
           <Avatar
-            className="bg-gray-600 ml-3 flex-shrink-0"
+            className={`bg-gray-600 ${isArabic ? 'mr-3' : 'ml-3'} flex-shrink-0`}
             sx={{ width: 40, height: 40 }}
           >
             <PersonIcon style={{ fontSize: '20px', color: 'white' }} />
@@ -548,7 +582,7 @@ export default function ChatbotPage() {
         >
           {/* Connection Error */}
           {connectionError && (
-            <Box className="bg-red-50 border-l-4 border-red-400 p-4 m-4">
+            <Box className="bg-red-50 border-l-4 border-red-400 p-4 m-4" style={{ direction: currentLanguage === 'ar' ? 'rtl' : 'ltr' }}>
               <Typography className="text-red-700 text-sm">
                 {connectionError}
               </Typography>
@@ -574,7 +608,7 @@ export default function ChatbotPage() {
 
             {/* Language Selection Inside Chat */}
             {showLanguageSelection && !isConnecting && (
-              <Box className="text-center py-8">
+              <Box className="text-center py-8" style={{ direction: 'ltr' }}>
                 <Avatar
                   className="bg-gradient-to-br from-blue-500 to-purple-600 mx-auto mb-4"
                   sx={{ width: 80, height: 80 }}
@@ -586,7 +620,7 @@ export default function ChatbotPage() {
                 </Typography>
                 <Typography className="text-gray-600 mb-6">
                   Choose your preferred language / Wybierz język / Elige tu
-                  idioma
+                  idioma / اختر لغتك
                 </Typography>
 
                 <Box className="flex flex-col gap-3 max-w-sm mx-auto">
@@ -598,6 +632,7 @@ export default function ChatbotPage() {
                       fullWidth
                       className="p-4 text-left justify-start hover:bg-blue-50"
                       startIcon={<span className="text-2xl">{lang.flag}</span>}
+                      style={{ direction: lang.code === 'ar' ? 'rtl' : 'ltr' }}
                     >
                       <Typography variant="h6">{lang.name}</Typography>
                     </Button>
@@ -611,7 +646,7 @@ export default function ChatbotPage() {
               !isConnecting &&
               hasSelectedLanguage &&
               !showLanguageSelection && (
-                <Box className="text-center py-12">
+                <Box className={`text-center py-12 ${currentLanguage === 'ar' ? 'rtl' : 'ltr'}`}>
                   <Avatar
                     className="bg-gradient-to-br from-blue-500 to-purple-600 mx-auto mb-4"
                     sx={{ width: 80, height: 80 }}
@@ -644,9 +679,9 @@ export default function ChatbotPage() {
 
             {/* Bot Typing Indicator */}
             {isBotTyping && (
-              <div className="flex justify-start mb-4">
+              <div className={`flex ${currentLanguage === 'ar' ? 'justify-end' : 'justify-start'} mb-4`} style={{ direction: currentLanguage === 'ar' ? 'rtl' : 'ltr' }}>
                 <Avatar
-                  className="bg-gradient-to-br from-blue-500 to-purple-600 mr-3"
+                  className={`bg-gradient-to-br from-blue-500 to-purple-600 ${currentLanguage === 'ar' ? 'ml-3' : 'mr-3'}`}
                   sx={{ width: 40, height: 40 }}
                 >
                   <SmartToyIcon style={{ fontSize: '20px', color: 'white' }} />
@@ -678,7 +713,7 @@ export default function ChatbotPage() {
           </Box>
 
           {/* Input Area */}
-          <Box className="p-6 border-t border-gray-200 bg-gray-50/50">
+          <Box className="p-6 border-t border-gray-200 bg-gray-50/50" style={{ direction: currentLanguage === 'ar' ? 'rtl' : 'ltr' }}>
             <Box className="flex items-center gap-3">
               <input
                 type="text"

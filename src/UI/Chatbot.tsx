@@ -8,6 +8,7 @@ import SendIcon from '@mui/icons-material/Send'
 import LanguageIcon from '@mui/icons-material/Language'
 import CircularProgress from '@mui/material/CircularProgress'
 import ReactMarkdown from 'react-markdown'
+import { Typography } from '@mui/material'
 
 interface ChatMessage {
   userId: string
@@ -31,12 +32,15 @@ interface Language {
   flag: string
 }
 
+// 1. 🌐 UPDATED: Add Arabic to the languages array
 const languages: Language[] = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'pl', name: 'Polski', flag: '🇵🇱' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' }, // Added Arabic
 ]
 
+// 2. 📝 UPDATED: Add Arabic translations to the translations object
 const translations = {
   en: {
     welcome: 'Welcome to UniBot! 👋',
@@ -98,6 +102,27 @@ const translations = {
     selectLanguage: 'Elige tu idioma:',
     languageSelected: 'Idioma cambiado a',
   },
+  // 🇦🇪 NEW LANGUAGE: ARABIC
+  ar: {
+    welcome: 'مرحباً بك في يوني-بوت! 👋',
+    subtitle:
+      'أنا مساعدك الذكي الخاص بجامعة فروتسواف للعلوم والتكنولوجيا.',
+    connecting: 'جاري الاتصال بيوني-بوت...',
+    typing: 'يوني-بوت يكتب...',
+    placeholder: 'اكتب رسالتك...',
+    online: 'متصل',
+    offline: 'غير متصل',
+    retryConnection: 'إعادة محاولة الاتصال',
+    connectionError: 'فشل الاتصال بالشات بوت. يرجى المحاولة مرة أخرى.',
+    suggestions: [
+      'المساعدة في البطاقة الجامعية',
+      'معلومات عن المقررات',
+      'خدمات الحرم الجامعي',
+      'الدعم الأكاديمي',
+    ],
+    selectLanguage: 'اختر لغتك:',
+    languageSelected: 'تم تغيير اللغة إلى',
+  },
 }
 
 const Chatbot = () => {
@@ -122,6 +147,8 @@ const Chatbot = () => {
 
   const currentTranslations =
     translations[currentLanguage as keyof typeof translations]
+
+  const isArabic = currentLanguage === 'ar'; // Check for Arabic language
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -304,13 +331,33 @@ const Chatbot = () => {
       messageContent = msg.text
     }
 
+    // 3. 📝 RTL/LRT Logic for Message Rendering
+    const isRtlMessage = currentLanguage === 'ar';
+    const justifyContent = isRtlMessage
+      ? (msg.type === 'user' ? 'justify-end' : 'justify-start')
+      : (msg.type === 'user' ? 'justify-end' : 'justify-start');
+
+    const avatarMargin = isRtlMessage
+      ? (msg.type === 'user' ? 'ml-2' : 'mr-2')
+      : (msg.type === 'user' ? 'ml-2' : 'mr-2');
+
+    const borderRadius = isRtlMessage
+      ? (msg.type === 'user' ? 'rounded-tl-sm' : 'rounded-tr-sm')
+      : (msg.type === 'user' ? 'rounded-br-sm' : 'rounded-bl-sm');
+
+    // Fix: Swap user/bot positioning when in RTL mode for a standard RTL chat flow
+    const messageOrder = (msg.type === 'user' && isRtlMessage)
+      ? 'flex-row-reverse'
+      : 'flex-row';
+
     return (
       <div
         key={msg.messageId || index}
-        className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+        className={`flex ${justifyContent} ${messageOrder}`}
+        style={{ direction: isRtlMessage ? 'rtl' : 'ltr' }}
       >
         {msg.type === 'bot' && (
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+          <div className={`w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 ${avatarMargin}`}>
             <SmartToyIcon style={{ fontSize: '16px', color: 'white' }} />
           </div>
         )}
@@ -319,11 +366,11 @@ const Chatbot = () => {
           <div
             className={`p-3 rounded-2xl ${
               msg.type === 'user'
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-br-sm'
-                : 'bg-white border border-gray-200 rounded-bl-sm'
+                ? `bg-gradient-to-r from-blue-500 to-purple-600 text-white ${borderRadius}`
+                : `bg-white border border-gray-200 ${borderRadius}`
             }`}
           >
-            <div className="text-sm break-words">
+            <div className="text-sm break-words" style={{ textAlign: isRtlMessage ? 'right' : 'left' }}>
               {msg.type === 'bot' ? (
                 <ReactMarkdown
                   components={{
@@ -340,10 +387,10 @@ const Chatbot = () => {
                       <p className="mb-2 last:mb-0">{children}</p>
                     ),
                     ul: ({ children }) => (
-                      <ul className="list-disc pl-4 mb-2">{children}</ul>
+                      <ul className={`list-disc mb-2 ${isRtlMessage ? 'pr-4' : 'pl-4'}`}>{children}</ul>
                     ),
                     ol: ({ children }) => (
-                      <ol className="list-decimal pl-4 mb-2">{children}</ol>
+                      <ol className={`list-decimal mb-2 ${isRtlMessage ? 'pr-4' : 'pl-4'}`}>{children}</ol>
                     ),
                     li: ({ children }) => <li className="mb-1">{children}</li>,
                     strong: ({ children }) => (
@@ -369,7 +416,7 @@ const Chatbot = () => {
                     ),
                     table: ({ children }) => (
                       <div className="overflow-x-auto my-4">
-                        <table className="min-w-full border-collapse border border-gray-300 text-xs">
+                        <table className="min-w-full border-collapse border border-gray-300 text-xs" style={{ textAlign: 'center' }}>
                           {children}
                         </table>
                       </div>
@@ -382,7 +429,7 @@ const Chatbot = () => {
                       <tr className="border-b border-gray-200">{children}</tr>
                     ),
                     th: ({ children }) => (
-                      <th className="border border-gray-300 px-2 py-1 text-left font-semibold text-gray-900">
+                      <th className="border border-gray-300 px-2 py-1 font-semibold text-gray-900" style={{ textAlign: 'center' }}>
                         {children}
                       </th>
                     ),
@@ -403,6 +450,7 @@ const Chatbot = () => {
               className={`text-xs mt-1 ${
                 msg.type === 'user' ? 'text-white/70' : 'text-gray-500'
               }`}
+              style={{ textAlign: isRtlMessage ? 'left' : 'right' }} // Time stamp aligns to the opposite side of the text flow
             >
               {new Date(msg.timestamp).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -431,6 +479,7 @@ const Chatbot = () => {
                     }
                     className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors duration-200 hover:shadow-md"
                     disabled={selectedCategory === category.id}
+                    style={{ textAlign: isRtlMessage ? 'right' : 'left' }}
                   >
                     <div className="font-medium text-blue-800 text-sm">
                       📋 {category.title}
@@ -445,7 +494,7 @@ const Chatbot = () => {
         </div>
 
         {msg.type === 'user' && (
-          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center ml-2 flex-shrink-0">
+          <div className={`w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 ${avatarMargin}`}>
             <PersonIcon style={{ fontSize: '16px', color: 'white' }} />
           </div>
         )}
@@ -470,7 +519,10 @@ const Chatbot = () => {
       </div>
 
       {showChat && (
-        <div className="fixed right-6 bottom-24 shadow-2xl h-[500px] w-[400px] bg-white rounded-2xl border border-gray-200 overflow-hidden z-50">
+        <div
+          className="fixed right-6 bottom-24 shadow-2xl h-[500px] w-[400px] bg-white rounded-2xl border border-gray-200 overflow-hidden z-50"
+          style={{ direction: isArabic ? 'rtl' : 'ltr' }} // Set main chat direction
+        >
           <div className="flex flex-col h-full">
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 flex items-center justify-between">
@@ -574,6 +626,7 @@ const Chatbot = () => {
                         key={lang.code}
                         onClick={() => handleLanguageSelect(lang.code)}
                         className="w-full flex items-center justify-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors"
+                        style={{ direction: lang.code === 'ar' ? 'rtl' : 'ltr' }}
                       >
                         <span className="text-xl">{lang.flag}</span>
                         <span className="font-medium">{lang.name}</span>
@@ -619,13 +672,13 @@ const Chatbot = () => {
 
               {/* Bot typing indicator */}
               {isBotTyping && (
-                <div className="flex justify-start">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-2">
+                <div className={`flex ${isArabic ? 'justify-start' : 'justify-start'}`} style={{ direction: isArabic ? 'rtl' : 'ltr' }}>
+                  <div className={`w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center ${isArabic ? 'ml-2' : 'mr-2'}`}>
                     <SmartToyIcon
                       style={{ fontSize: '16px', color: 'white' }}
                     />
                   </div>
-                  <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm p-3">
+                  <div className={`bg-white border border-gray-200 rounded-2xl ${isArabic ? 'rounded-tl-sm' : 'rounded-bl-sm'} p-3`}>
                     <p className="text-gray-500 text-sm">
                       {currentTranslations.typing}
                     </p>
@@ -646,6 +699,7 @@ const Chatbot = () => {
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     disabled={!isConnected}
+                    style={{ textAlign: isArabic ? 'right' : 'left' }}
                   />
                   <button
                     onClick={handleSendMessage}
